@@ -136,10 +136,12 @@ usher mcp add supabase
   +-- stores the token in the OS Keychain (never written to disk)
   +-- writes ~/.usher/config.json with a keychain reference, not the token
   +-- syncs to all enabled tools:
-        ~/.claude/settings.json   (Claude Code)
-        ~/.gemini/settings.json   (Gemini CLI)
-        ~/.codex/config.toml      (Codex)
-        ~/.cursor/mcp.json        (Cursor)
+        ~/.claude/settings.json                                                              (Claude Code)
+        ~/.gemini/settings.json                                                              (Gemini CLI)
+        ~/.codex/config.toml                                                                 (Codex)
+        ~/.cursor/mcp.json                                                                   (Cursor)
+        ~/.codeium/windsurf/mcp_config.json                                                  (Windsurf)
+        ~/Library/Application Support/Code/User/globalStorage/.../cline_mcp_settings.json   (Cline)
 ```
 
 Tokens are **never stored in config files**. Each sync resolves them from the keychain at runtime.
@@ -241,8 +243,8 @@ To add a new MCP server, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `GEMINI.md` |
 | Codex | `~/.codex/config.toml` | `~/.codex/skills/` | `AGENTS.md` |
 | Cursor | `~/.cursor/mcp.json` | `~/.cursor/skills/` | `.cursorrules` |
-| Windsurf | n/a | `~/.windsurf/skills/` | `~/.codeium/windsurf/memories/global_rules.md` |
-| Cline | n/a | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | `.clinerules` |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` | `~/.windsurf/skills/` | `~/.codeium/windsurf/memories/global_rules.md` |
+| Cline | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | `.clinerules` |
 
 ---
 
