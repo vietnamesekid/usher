@@ -73,12 +73,12 @@ func runSetup() error {
 	// Load existing tools as default selection when re-running setup.
 	var defaults []string
 	if alreadyExists {
-		if existing, err := d.cfgLoader.LoadGlobal(); err == nil {
+		loader := config.NewLoader(globalPath)
+		if existing, err := loader.LoadGlobal(); err == nil {
 			defaults = toolsToSelected(existing.Tools)
 		}
 	}
 
-	_ = defaults // passed to multiselect below
 	selected := d.prompt.AskMultiSelectWithDefaults(
 		"Which AI coding tools do you use? (space to select)",
 		allToolLabels,
