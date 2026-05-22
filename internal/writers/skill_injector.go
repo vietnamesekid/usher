@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,7 +35,7 @@ func NewSkillInjector() *SkillInjector {
 func (si *SkillInjector) InjectAll(rc types.ResolvedConfig) error {
 	files := instructionFiles(rc)
 	for _, skill := range rc.Skills {
-		content, err := si.fetchSkillContent(skill.Source, skill.Version)
+		content, err := si.fetchSkillContent(skill.Source, skill.Name, skill.Version)
 		if err != nil {
 			return fmt.Errorf("fetching skill %s: %w", skill.Name, err)
 		}
@@ -64,6 +65,7 @@ func (si *SkillInjector) RemoveAll(skillNames []string, rc types.ResolvedConfig)
 func instructionFiles(rc types.ResolvedConfig) []string {
 	var files []string
 	cwd, _ := os.Getwd()
+	home, _ := os.UserHomeDir()
 	if rc.Tools.Claude {
 		files = append(files, cwd+"/CLAUDE.md")
 	}
@@ -75,6 +77,12 @@ func instructionFiles(rc types.ResolvedConfig) []string {
 	}
 	if rc.Tools.Cursor {
 		files = append(files, cwd+"/.cursorrules")
+	}
+	if rc.Tools.Windsurf {
+		files = append(files, home+"/.codeium/windsurf/memories/global_rules.md")
+	}
+	if rc.Tools.Cline {
+		files = append(files, cwd+"/.clinerules")
 	}
 	return files
 }
@@ -139,12 +147,21 @@ func removeFromFile(filePath, skillName string) error {
 	return os.WriteFile(filePath, []byte(result), 0644)
 }
 
-// fetchSkillContent downloads skill markdown, substituting {version}.
-func (si *SkillInjector) fetchSkillContent(source registry.SkillSource, version string) (string, error) {
+// fetchSkillContent reads skill markdown from the local install path first,
+// falling back to HTTP fetch only if the local file is absent.
+func (si *SkillInjector) fetchSkillContent(source registry.SkillSource, skillName, version string) (string, error) {
 	if source.Type == "local" {
 		data, err := os.ReadFile(source.URL)
 		return string(data), err
 	}
+
+	// Prefer locally installed copy to avoid requiring internet on sync.
+	home, _ := os.UserHomeDir()
+	localPath := filepath.Join(home, ".agents", "skills", skillName, "SKILL.md")
+	if data, err := os.ReadFile(localPath); err == nil {
+		return string(data), nil
+	}
+
 	url := strings.ReplaceAll(source.URL, "{version}", version)
 	resp, err := si.httpClient.Get(url)
 	if err != nil {

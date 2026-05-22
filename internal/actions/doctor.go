@@ -93,10 +93,12 @@ func fileExists(path string) bool {
 
 func binaryHint(toolName string) string {
 	hints := map[string]string{
-		"claude": "npm install -g @anthropic-ai/claude-code",
-		"gemini": "npm install -g @google/gemini-cli",
-		"codex":  "npm install -g @openai/codex",
-		"cursor": "download at cursor.sh",
+		"claude":   "npm install -g @anthropic-ai/claude-code",
+		"gemini":   "npm install -g @google/gemini-cli",
+		"codex":    "npm install -g @openai/codex",
+		"cursor":   "download at cursor.sh",
+		"windsurf": "download at windsurf.com",
+		"cline":    "install Cline extension in VS Code",
 	}
 	if hint, ok := hints[toolName]; ok {
 		return fmt.Sprintf("binary not found → %s", hint)
@@ -114,6 +116,10 @@ func isToolEnabledForDoctor(name string, tools config.ToolsConfig) bool {
 		return tools.Codex
 	case "cursor":
 		return tools.Cursor
+	case "windsurf":
+		return tools.Windsurf
+	case "cline":
+		return tools.Cline
 	}
 	return false
 }

@@ -29,10 +29,12 @@ type AuthEntry struct {
 }
 
 type ToolsConfig struct {
-	Claude bool `json:"claude"`
-	Gemini bool `json:"gemini"`
-	Codex  bool `json:"codex"`
-	Cursor bool `json:"cursor"`
+	Claude   bool `json:"claude"`
+	Gemini   bool `json:"gemini"`
+	Codex    bool `json:"codex"`
+	Cursor   bool `json:"cursor"`
+	Windsurf bool `json:"windsurf"`
+	Cline    bool `json:"cline"`
 }
 
 type SyncConfig struct {

@@ -241,8 +241,8 @@ To add a new MCP server, see [CONTRIBUTING.md](CONTRIBUTING.md).
 | Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `GEMINI.md` |
 | Codex | `~/.codex/config.toml` | `~/.codex/skills/` | `AGENTS.md` |
 | Cursor | `~/.cursor/mcp.json` | `~/.cursor/skills/` | `.cursorrules` |
-| Windsurf | n/a | `~/.windsurf/skills/` | n/a |
-| Cline | n/a | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | n/a |
+| Windsurf | n/a | `~/.windsurf/skills/` | `~/.codeium/windsurf/memories/global_rules.md` |
+| Cline | n/a | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | `.clinerules` |
 
 ---
 

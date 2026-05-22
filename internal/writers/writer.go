@@ -25,5 +25,7 @@ func All() []Writer {
 		NewGeminiWriter(),
 		NewCodexWriter(),
 		NewCursorWriter(),
+		NewWindsurfWriter(),
+		NewClineWriter(),
 	}
 }

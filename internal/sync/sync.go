@@ -132,6 +132,10 @@ func isToolEnabled(name string, tools config.ToolsConfig) bool {
 		return tools.Codex
 	case "cursor":
 		return tools.Cursor
+	case "windsurf":
+		return tools.Windsurf
+	case "cline":
+		return tools.Cline
 	}
 	return false
 }

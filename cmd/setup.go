@@ -45,6 +45,12 @@ func runSetup() error {
 	if d.prompt.AskConfirm("Enable Cursor?") {
 		tools.Cursor = true
 	}
+	if d.prompt.AskConfirm("Enable Windsurf?") {
+		tools.Windsurf = true
+	}
+	if d.prompt.AskConfirm("Enable Cline?") {
+		tools.Cline = true
+	}
 
 	cfg := config.DefaultConfig()
 	cfg.Tools = tools
