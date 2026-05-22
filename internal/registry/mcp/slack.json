@@ -1,0 +1,11 @@
+{
+  "name": "slack",
+  "description": "Slack MCP server — read channels, send messages, manage workspaces",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-slack@latest"],
+  "auth": {
+    "envVar": "SLACK_BOT_TOKEN",
+    "url": "https://api.slack.com/apps"
+  },
+  "tags": ["messaging", "slack", "notifications"]
+}

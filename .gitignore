@@ -1,0 +1,30 @@
+# Binary
+usher
+usher-linux-*
+usher-darwin-*
+usher-windows-*
+
+# GoReleaser output
+dist/
+
+# Secrets
+.usher/.secrets
+*.secrets
+
+# Go test artifacts
+*.test
+*.out
+coverage.html
+
+# Project-scope skills (installed locally, not committed)
+.agents/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo

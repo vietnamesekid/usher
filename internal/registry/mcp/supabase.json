@@ -1,0 +1,11 @@
+{
+  "name": "supabase",
+  "description": "Supabase MCP server — database, auth, edge functions, storage",
+  "command": "npx",
+  "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+  "auth": {
+    "envVar": "SUPABASE_ACCESS_TOKEN",
+    "url": "https://supabase.com/dashboard/account/tokens"
+  },
+  "tags": ["database", "auth", "storage", "realtime"]
+}

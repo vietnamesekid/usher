@@ -1,0 +1,11 @@
+{
+  "name": "postgres",
+  "description": "PostgreSQL MCP server — query, inspect schema, manage data",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres@latest"],
+  "auth": {
+    "envVar": "POSTGRES_CONNECTION_STRING",
+    "url": ""
+  },
+  "tags": ["database", "postgres", "sql"]
+}

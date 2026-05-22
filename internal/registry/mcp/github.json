@@ -1,0 +1,11 @@
+{
+  "name": "github",
+  "description": "GitHub MCP server — repos, issues, PRs, code search",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github@latest"],
+  "auth": {
+    "envVar": "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "url": "https://github.com/settings/tokens"
+  },
+  "tags": ["git", "code", "issues", "prs"]
+}

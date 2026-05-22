@@ -1,0 +1,11 @@
+{
+  "name": "filesystem",
+  "description": "Filesystem MCP server — read/write local files and directories",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"],
+  "auth": {
+    "envVar": "",
+    "url": ""
+  },
+  "tags": ["files", "local", "io"]
+}
