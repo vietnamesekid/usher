@@ -224,15 +224,3 @@ Currently bundled:
 | Cursor | `~/.cursor/mcp.json` | `~/.cursor/skills/` | `.cursorrules` |
 | Windsurf | — | `~/.windsurf/skills/` | — |
 | Cline | — | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | — |
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-## License
-
-MIT
