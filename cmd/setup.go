@@ -32,24 +32,20 @@ func runSetup() error {
 		return nil
 	}
 
-	tools := config.ToolsConfig{}
-	if d.prompt.AskConfirm("Enable Claude Code?") {
-		tools.Claude = true
+	allTools := []string{"Claude Code", "Gemini CLI", "Codex CLI", "Cursor", "Windsurf", "Cline"}
+	selected := d.prompt.AskMultiSelect("Which AI coding tools do you use? (space to select)", allTools)
+
+	selectedSet := make(map[string]bool, len(selected))
+	for _, s := range selected {
+		selectedSet[s] = true
 	}
-	if d.prompt.AskConfirm("Enable Gemini CLI?") {
-		tools.Gemini = true
-	}
-	if d.prompt.AskConfirm("Enable Codex CLI?") {
-		tools.Codex = true
-	}
-	if d.prompt.AskConfirm("Enable Cursor?") {
-		tools.Cursor = true
-	}
-	if d.prompt.AskConfirm("Enable Windsurf?") {
-		tools.Windsurf = true
-	}
-	if d.prompt.AskConfirm("Enable Cline?") {
-		tools.Cline = true
+	tools := config.ToolsConfig{
+		Claude:   selectedSet["Claude Code"],
+		Gemini:   selectedSet["Gemini CLI"],
+		Codex:    selectedSet["Codex CLI"],
+		Cursor:   selectedSet["Cursor"],
+		Windsurf: selectedSet["Windsurf"],
+		Cline:    selectedSet["Cline"],
 	}
 
 	cfg := config.DefaultConfig()
