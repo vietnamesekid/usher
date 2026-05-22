@@ -2,7 +2,7 @@
 
 **One command to rule all your AI coding tools.**
 
-Usher installs and configures MCP servers and skills across Claude Code, Gemini CLI, Codex, and Cursor from a single place. Add a tool once — Usher writes the right config for every agent.
+Usher installs and configures MCP servers and skills across Claude Code, Gemini CLI, Codex, Cursor, Windsurf, and Cline from a single place. Add a tool once — Usher writes the right config for every agent.
 
 ```bash
 usher mcp add supabase      # stores token in Keychain, writes to all tools at once
@@ -32,6 +32,7 @@ Download the latest binary for your platform from [Releases](https://github.com/
 | Linux | x86_64 | `usher-linux-amd64` |
 | Linux | ARM64 | `usher-linux-arm64` |
 | Windows | x86_64 | `usher-windows-amd64.exe` |
+| Windows | ARM64 | `usher-windows-arm64.exe` |
 
 ```bash
 # macOS example
@@ -87,7 +88,7 @@ usher mcp list --available      Browse all MCPs in the registry
 ### Skills
 
 ```text
-usher skill add <owner/skill>   Install a skill from skills.sh (e.g. supabase/agent-skills)
+usher skill add <owner/skill>   Install a skill from GitHub (e.g. supabase/agent-skills)
 usher skill add supabase        Short name — Usher resolves to the right repo automatically
 usher skill remove              Interactive: select from installed skills to remove
 usher skill remove <name>       Remove a specific skill by name
@@ -130,15 +131,28 @@ Tokens are **never stored in config files** — only a keychain key reference. S
 ```text
 usher skill add supabase
   │
-  ├─ runs `npx skills find supabase` to resolve → "supabase/agent-skills"
-  ├─ clones https://github.com/supabase/agent-skills (shallow)
+  ├─ resolves "supabase" → "supabase/agent-skills" (via npx skills find)
+  ├─ clones https://github.com/supabase/agent-skills (shallow, into temp dir)
   ├─ finds all SKILL.md files in the repo
   ├─ copies each to ~/.agents/skills/<skill-name>/  (global)
   │    or  .agents/skills/<skill-name>/             (project)
-  └─ creates symlinks for each agent:
-       ~/.claude/skills/<skill-name>  →  ../../.agents/skills/<skill-name>
-       ~/.cursor/skills/<skill-name>  →  ../../.agents/skills/<skill-name>
-       (and so on for all supported agents)
+  ├─ creates symlinks for each agent:
+  │    ~/.claude/skills/<skill-name>     →  ../../.agents/skills/<skill-name>
+  │    ~/.cursor/skills/<skill-name>     →  ../../.agents/skills/<skill-name>
+  │    ~/.gemini/skills/<skill-name>     →  ../../.agents/skills/<skill-name>
+  │    ~/.codex/skills/<skill-name>      →  ../../.agents/skills/<skill-name>
+  │    ~/.windsurf/skills/<skill-name>   →  ../../.agents/skills/<skill-name>
+  │    ~/.vscode/extensions/saoudrizwan.claude-dev/skills/<skill-name>  (Cline)
+  └─ injects skill content into instruction files via marker blocks:
+       CLAUDE.md, GEMINI.md, AGENTS.md, .cursorrules
+```
+
+Skill content is injected between HTML comment markers and updated in-place on each sync:
+
+```html
+<!-- usher:skill:supabase:start -->
+...skill content...
+<!-- usher:skill:supabase:end -->
 ```
 
 ---
@@ -195,6 +209,21 @@ Currently bundled:
 | `supabase` | Supabase database, auth, edge functions, storage |
 | `github` | GitHub repos, issues, PRs, code search |
 | `filesystem` | Read/write local files (no auth required) |
+| `postgres` | Query, inspect schema, and manage Postgres databases |
+| `slack` | Read channels, send messages, manage workspaces |
+
+---
+
+## Supported agents
+
+| Agent | MCP config | Skill dir | Instruction file |
+| --- | --- | --- | --- |
+| Claude Code | `~/.claude/settings.json` | `~/.claude/skills/` | `CLAUDE.md` |
+| Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `GEMINI.md` |
+| Codex | `~/.codex/config.toml` | `~/.codex/skills/` | `AGENTS.md` |
+| Cursor | `~/.cursor/mcp.json` | `~/.cursor/skills/` | `.cursorrules` |
+| Windsurf | — | `~/.windsurf/skills/` | — |
+| Cline | — | `~/.vscode/extensions/saoudrizwan.claude-dev/skills/` | — |
 
 ---
 
