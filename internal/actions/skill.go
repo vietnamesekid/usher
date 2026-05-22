@@ -6,21 +6,30 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/vietnamesekid/usher/internal/config"
 	"github.com/vietnamesekid/usher/internal/skills"
 	"github.com/vietnamesekid/usher/internal/ui"
 )
 
 type SkillActions struct {
-	mgr    *skills.Manager
-	out    *ui.Output
-	prompt *ui.Prompt
+	mgr       *skills.Manager
+	cfgWriter *config.Writer
+	syncFn    func(global config.Config, project config.ProjectConfig) error
+	out       *ui.Output
+	prompt    *ui.Prompt
 }
 
-func NewSkillActions(out *ui.Output, prompt *ui.Prompt) *SkillActions {
-	return &SkillActions{mgr: skills.New(), out: out, prompt: prompt}
+func NewSkillActions(cfgWriter *config.Writer, syncFn func(config.Config, config.ProjectConfig) error, out *ui.Output, prompt *ui.Prompt) *SkillActions {
+	return &SkillActions{
+		mgr:       skills.New(),
+		cfgWriter: cfgWriter,
+		syncFn:    syncFn,
+		out:       out,
+		prompt:    prompt,
+	}
 }
 
-// Add resolves slug, prompts scope if needed, clones and installs.
+// Add resolves slug, prompts scope if needed, clones and installs, then writes to config.
 func (a *SkillActions) Add(slug string, globalFlag bool, globalFlagSet bool, agents []string, all bool) error {
 	resolved, err := a.resolveSlug(slug)
 	if err != nil {
@@ -43,6 +52,12 @@ func (a *SkillActions) Add(slug string, globalFlag bool, globalFlagSet bool, age
 	}
 
 	for _, s := range installed {
+		entry := config.SkillEntry{
+			Source: resolved,
+		}
+		if err := a.cfgWriter.AddSkillEntry(s.Name, entry); err != nil {
+			return fmt.Errorf("saving skill %q to config: %w", s.Name, err)
+		}
 		a.out.Success(fmt.Sprintf("Installed skill %q → %s", s.Name, s.Path))
 		if s.Description != "" {
 			a.out.Info(fmt.Sprintf("  %s", s.Description))
@@ -51,8 +66,7 @@ func (a *SkillActions) Add(slug string, globalFlag bool, globalFlagSet bool, age
 	return nil
 }
 
-// Remove resolves name to installed skill(s), prompts scope if needed.
-// If name is empty, shows a multi-select list of all installed skills.
+// Remove resolves name to installed skill(s), removes from disk and config.
 func (a *SkillActions) Remove(name string, globalFlag bool, globalFlagSet bool, agents []string) error {
 	global := globalFlag
 	if !globalFlagSet {
@@ -104,12 +118,15 @@ func (a *SkillActions) Remove(name string, globalFlag bool, globalFlagSet bool, 
 		if err := a.mgr.Remove(target, global); err != nil {
 			return err
 		}
+		if err := a.cfgWriter.RemoveSkillEntry(target); err != nil {
+			return fmt.Errorf("removing skill %q from config: %w", target, err)
+		}
 		a.out.Success(fmt.Sprintf("Removed skill %q", target))
 	}
 	return nil
 }
 
-// Update reinstalls all skills from their source repos.
+// Update re-installs all skills from their recorded source repos.
 func (a *SkillActions) Update(globalFlag bool, globalFlagSet bool, agents []string, all bool) error {
 	global := globalFlag
 	if !globalFlagSet {
@@ -129,7 +146,20 @@ func (a *SkillActions) Update(globalFlag bool, globalFlagSet bool, agents []stri
 		return nil
 	}
 
-	a.out.Info(fmt.Sprintf("Skills are managed by their source repos. Use `usher skill add <owner/repo>` to reinstall the latest version."))
+	// Re-install each skill from its recorded source repo.
+	for _, s := range installed {
+		source := s.Source
+		if source == "" {
+			a.out.Warning(fmt.Sprintf("Skipping %q: source repo not recorded (manually installed?)", s.Name))
+			continue
+		}
+		a.out.Step(fmt.Sprintf("Updating %q from %s...", s.Name, source))
+		if _, err := a.mgr.Install(source, global); err != nil {
+			a.out.Warning(fmt.Sprintf("Failed to update %q: %v", s.Name, err))
+			continue
+		}
+		a.out.Success(fmt.Sprintf("Updated %q", s.Name))
+	}
 	return nil
 }
 
@@ -153,9 +183,9 @@ func (a *SkillActions) List() error {
 		a.out.Info("Global")
 		rows := make([][]string, len(global))
 		for i, s := range global {
-			rows[i] = []string{s.Name, truncate(s.Description, 60)}
+			rows[i] = []string{s.Name, s.Source, truncate(s.Description, 60)}
 		}
-		a.out.Table([]string{"NAME", "DESCRIPTION"}, rows)
+		a.out.Table([]string{"NAME", "SOURCE", "DESCRIPTION"}, rows)
 	}
 	if len(project) > 0 {
 		if len(global) > 0 {
@@ -164,15 +194,14 @@ func (a *SkillActions) List() error {
 		a.out.Info("Project")
 		rows := make([][]string, len(project))
 		for i, s := range project {
-			rows[i] = []string{s.Name, truncate(s.Description, 60)}
+			rows[i] = []string{s.Name, s.Source, truncate(s.Description, 60)}
 		}
-		a.out.Table([]string{"NAME", "DESCRIPTION"}, rows)
+		a.out.Table([]string{"NAME", "SOURCE", "DESCRIPTION"}, rows)
 	}
 	return nil
 }
 
 func truncate(s string, max int) string {
-	// Strip surrounding quotes if present.
 	s = strings.Trim(s, `"`)
 	if len(s) <= max {
 		return s

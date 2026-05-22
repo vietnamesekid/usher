@@ -111,6 +111,9 @@ func (a *AuthActions) Revoke(providerName string) error {
 	if err := a.kc.Delete(found.KeyRef); err != nil {
 		a.out.Warning(fmt.Sprintf("could not delete keychain entry: %v", err))
 	}
+	if err := a.cfgWriter.RemoveAuthEntry(providerName); err != nil {
+		return fmt.Errorf("removing auth entry from config: %w", err)
+	}
 
 	a.out.Success(fmt.Sprintf("Revoked credentials for %q", providerName))
 	return nil

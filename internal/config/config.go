@@ -18,7 +18,8 @@ type MCPEntry struct {
 }
 
 type SkillEntry struct {
-	Version  string `json:"version"`
+	Source   string `json:"source"`            // "owner/repo" used to install and update
+	Version  string `json:"version,omitempty"` // git ref / tag; empty = latest
 	Disabled bool   `json:"disabled,omitempty"`
 }
 

@@ -3,6 +3,7 @@ package config
 import (
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestWriter_AddAndRemoveMCPEntry(t *testing.T) {
@@ -48,7 +49,7 @@ func TestWriter_AddSkillEntry(t *testing.T) {
 	dir := t.TempDir()
 	w := NewWriter(filepath.Join(dir, "config.json"))
 
-	if err := w.AddSkillEntry("supabase", SkillEntry{Version: "1.0.0"}); err != nil {
+	if err := w.AddSkillEntry("supabase", SkillEntry{Source: "supabase/agent-skills"}); err != nil {
 		t.Fatalf("AddSkillEntry: %v", err)
 	}
 	l := &Loader{
@@ -59,8 +60,87 @@ func TestWriter_AddSkillEntry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Skills["supabase"].Version != "1.0.0" {
-		t.Errorf("skill version = %q, want 1.0.0", cfg.Skills["supabase"].Version)
+	if cfg.Skills["supabase"].Source != "supabase/agent-skills" {
+		t.Errorf("skill source = %q, want supabase/agent-skills", cfg.Skills["supabase"].Source)
+	}
+}
+
+func TestWriter_RemoveSkillEntry(t *testing.T) {
+	dir := t.TempDir()
+	w := NewWriter(filepath.Join(dir, "config.json"))
+
+	if err := w.AddSkillEntry("supabase", SkillEntry{Source: "supabase/agent-skills"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.RemoveSkillEntry("supabase"); err != nil {
+		t.Fatalf("RemoveSkillEntry: %v", err)
+	}
+	cfg, _ := w.read()
+	if _, ok := cfg.Skills["supabase"]; ok {
+		t.Error("supabase skill still present after remove")
+	}
+}
+
+func TestWriter_RemoveAuthEntry(t *testing.T) {
+	dir := t.TempDir()
+	w := NewWriter(filepath.Join(dir, "config.json"))
+
+	for _, e := range []AuthEntry{
+		{Provider: "anthropic", KeyRef: "usher.auth.anthropic.api_key", AddedAt: time.Now()},
+		{Provider: "google", KeyRef: "usher.auth.google.api_key", AddedAt: time.Now()},
+	} {
+		if err := w.AddAuthEntry(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := w.RemoveAuthEntry("anthropic"); err != nil {
+		t.Fatalf("RemoveAuthEntry: %v", err)
+	}
+
+	cfg, _ := w.read()
+	for _, a := range cfg.Auth {
+		if a.Provider == "anthropic" {
+			t.Error("anthropic auth entry still present after revoke")
+		}
+	}
+	found := false
+	for _, a := range cfg.Auth {
+		if a.Provider == "google" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("google auth entry was incorrectly removed")
+	}
+}
+
+func TestWriter_RemoveAuthEntry_NonExistent_NoError(t *testing.T) {
+	dir := t.TempDir()
+	w := NewWriter(filepath.Join(dir, "config.json"))
+	if err := w.RemoveAuthEntry("nonexistent"); err != nil {
+		t.Errorf("RemoveAuthEntry on nonexistent provider: %v", err)
+	}
+}
+
+func TestWriter_SetTools(t *testing.T) {
+	dir := t.TempDir()
+	w := NewWriter(filepath.Join(dir, "config.json"))
+	if err := w.Init(DefaultConfig()); err != nil {
+		t.Fatal(err)
+	}
+
+	tools := ToolsConfig{Claude: true, Cursor: true, Windsurf: true}
+	if err := w.SetTools(tools); err != nil {
+		t.Fatalf("SetTools: %v", err)
+	}
+
+	cfg, _ := w.read()
+	if !cfg.Tools.Claude || !cfg.Tools.Cursor || !cfg.Tools.Windsurf {
+		t.Error("tools not saved correctly")
+	}
+	if cfg.Tools.Gemini || cfg.Tools.Codex || cfg.Tools.Cline {
+		t.Error("unset tools should be false")
 	}
 }
 

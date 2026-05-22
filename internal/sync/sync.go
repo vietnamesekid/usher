@@ -114,9 +114,8 @@ func buildResolvedConfig(mc MergedConfig, secrets *keychain.ResolvedSecrets) Res
 	}
 	for _, sk := range mc.Skills {
 		rc.Skills = append(rc.Skills, ResolvedSkill{
-			Name:    sk.Name,
-			Version: sk.Version,
-			Source:  sk.Source,
+			Name:   sk.Name,
+			Source: sk.Source,
 		})
 	}
 	return rc

@@ -2,14 +2,10 @@ package writers
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/vietnamesekid/usher/internal/registry"
 	"github.com/vietnamesekid/usher/internal/types"
 )
 
@@ -18,26 +14,19 @@ const (
 	markerEndFmt   = "<!-- usher:skill:%s:end -->"
 )
 
-// SkillInjector fetches skill content and injects/updates marker blocks
-// in instruction files for each enabled tool.
-type SkillInjector struct {
-	httpClient *http.Client
-}
+// SkillInjector injects skill content from local disk into instruction files.
+type SkillInjector struct{}
 
-func NewSkillInjector() *SkillInjector {
-	return &SkillInjector{
-		httpClient: &http.Client{Timeout: 30 * time.Second},
-	}
-}
+func NewSkillInjector() *SkillInjector { return &SkillInjector{} }
 
 // InjectAll processes all skills in rc, injecting into instruction files
 // for each enabled tool.
 func (si *SkillInjector) InjectAll(rc types.ResolvedConfig) error {
 	files := instructionFiles(rc)
 	for _, skill := range rc.Skills {
-		content, err := si.fetchSkillContent(skill.Source, skill.Name, skill.Version)
+		content, err := readLocalSkill(skill.Name)
 		if err != nil {
-			return fmt.Errorf("fetching skill %s: %w", skill.Name, err)
+			return fmt.Errorf("reading skill %s: %w", skill.Name, err)
 		}
 		for _, f := range files {
 			if err := injectIntoFile(f, skill.Name, content); err != nil {
@@ -59,6 +48,17 @@ func (si *SkillInjector) RemoveAll(skillNames []string, rc types.ResolvedConfig)
 		}
 	}
 	return nil
+}
+
+// readLocalSkill reads SKILL.md from the global master install path.
+func readLocalSkill(name string) (string, error) {
+	home, _ := os.UserHomeDir()
+	path := filepath.Join(home, ".agents", "skills", name, "SKILL.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("skill %q not found at %s (run: usher skill add)", name, path)
+	}
+	return string(data), nil
 }
 
 // instructionFiles returns the instruction file paths for each enabled tool.
@@ -103,7 +103,6 @@ func injectIntoFile(filePath, skillName, content string) error {
 	endIdx := strings.Index(existing, end)
 
 	if startIdx == -1 || endIdx == -1 {
-		// Append new block.
 		newContent := existing
 		if newContent != "" && !strings.HasSuffix(newContent, "\n") {
 			newContent += "\n"
@@ -112,7 +111,6 @@ func injectIntoFile(filePath, skillName, content string) error {
 		return os.WriteFile(filePath, []byte(newContent), 0644)
 	}
 
-	// Replace existing block.
 	before := existing[:startIdx]
 	after := existing[endIdx+len(end):]
 	return os.WriteFile(filePath, []byte(before+block+after), 0644)
@@ -145,29 +143,4 @@ func removeFromFile(filePath, skillName string) error {
 		result += "\n" + after
 	}
 	return os.WriteFile(filePath, []byte(result), 0644)
-}
-
-// fetchSkillContent reads skill markdown from the local install path first,
-// falling back to HTTP fetch only if the local file is absent.
-func (si *SkillInjector) fetchSkillContent(source registry.SkillSource, skillName, version string) (string, error) {
-	if source.Type == "local" {
-		data, err := os.ReadFile(source.URL)
-		return string(data), err
-	}
-
-	// Prefer locally installed copy to avoid requiring internet on sync.
-	home, _ := os.UserHomeDir()
-	localPath := filepath.Join(home, ".agents", "skills", skillName, "SKILL.md")
-	if data, err := os.ReadFile(localPath); err == nil {
-		return string(data), nil
-	}
-
-	url := strings.ReplaceAll(source.URL, "{version}", version)
-	resp, err := si.httpClient.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	return string(body), err
 }

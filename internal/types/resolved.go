@@ -1,9 +1,6 @@
 package types
 
-import (
-	"github.com/vietnamesekid/usher/internal/config"
-	"github.com/vietnamesekid/usher/internal/registry"
-)
+import "github.com/vietnamesekid/usher/internal/config"
 
 // ResolvedMCPInstance is a single MCP server with its token resolved from keychain.
 // The Token field MUST NOT be serialized to disk.
@@ -16,10 +13,10 @@ type ResolvedMCPInstance struct {
 }
 
 // ResolvedSkill is a configured skill ready for injection.
+// Source is "owner/repo" — the local SKILL.md is read from ~/.agents/skills/<Name>/SKILL.md.
 type ResolvedSkill struct {
-	Name    string
-	Version string
-	Source  registry.SkillSource
+	Name   string
+	Source string // "owner/repo"
 }
 
 // ResolvedConfig is the fully-expanded, secret-populated config.

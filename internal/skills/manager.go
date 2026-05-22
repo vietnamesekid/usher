@@ -10,6 +10,7 @@ import (
 // InstalledSkill represents a skill found on disk.
 type InstalledSkill struct {
 	Name        string
+	Source      string // "owner/repo" recorded in SOURCE file
 	Description string
 	Path        string // master copy path
 	Global      bool
@@ -52,6 +53,9 @@ func (m *Manager) Install(ownerRepo string, global bool) ([]InstalledSkill, erro
 		if err := copyFile(sf, filepath.Join(dst, "SKILL.md")); err != nil {
 			return nil, err
 		}
+		if err := os.WriteFile(filepath.Join(dst, "SOURCE"), []byte(ownerRepo), 0644); err != nil {
+			return nil, err
+		}
 
 		if err := createSymlinks(name, dst, global); err != nil {
 			return nil, err
@@ -60,6 +64,7 @@ func (m *Manager) Install(ownerRepo string, global bool) ([]InstalledSkill, erro
 		desc := readDescription(filepath.Join(dst, "SKILL.md"))
 		installed = append(installed, InstalledSkill{
 			Name:        name,
+			Source:      ownerRepo,
 			Description: desc,
 			Path:        dst,
 			Global:      global,
@@ -103,8 +108,10 @@ func (m *Manager) List(global bool) ([]InstalledSkill, error) {
 		}
 		skillPath := filepath.Join(base, e.Name())
 		desc := readDescription(filepath.Join(skillPath, "SKILL.md"))
+		src, _ := os.ReadFile(filepath.Join(skillPath, "SOURCE"))
 		result = append(result, InstalledSkill{
 			Name:        e.Name(),
+			Source:      strings.TrimSpace(string(src)),
 			Description: desc,
 			Path:        skillPath,
 			Global:      global,

@@ -32,7 +32,7 @@ func newSkillAddCmd() *cobra.Command {
   usher skill add supabase/agent-skills --agent claude --agent cursor`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			a := actions.NewSkillActions(d.out, d.prompt)
+			a := actions.NewSkillActions(d.cfgWriter, makeSyncFn(), d.out, d.prompt)
 			return a.Add(args[0], global, cmd.Flags().Changed("global"), agents, all)
 		},
 	}
@@ -57,7 +57,7 @@ func newSkillRemoveCmd() *cobra.Command {
 			if len(args) > 0 {
 				name = args[0]
 			}
-			a := actions.NewSkillActions(d.out, d.prompt)
+			a := actions.NewSkillActions(d.cfgWriter, makeSyncFn(), d.out, d.prompt)
 			return a.Remove(name, global, cmd.Flags().Changed("global"), agents)
 		},
 	}
@@ -78,7 +78,7 @@ func newSkillUpdateCmd() *cobra.Command {
   usher skill update --global`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			a := actions.NewSkillActions(d.out, d.prompt)
+			a := actions.NewSkillActions(d.cfgWriter, makeSyncFn(), d.out, d.prompt)
 			return a.Update(global, cmd.Flags().Changed("global"), agents, all)
 		},
 	}
@@ -94,7 +94,7 @@ func newSkillListCmd() *cobra.Command {
 		Short: "List installed skills",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			a := actions.NewSkillActions(d.out, d.prompt)
+			a := actions.NewSkillActions(d.cfgWriter, makeSyncFn(), d.out, d.prompt)
 			return a.List()
 		},
 	}

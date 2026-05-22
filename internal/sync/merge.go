@@ -25,9 +25,8 @@ type MergedMCPInstance struct {
 }
 
 type MergedSkill struct {
-	Name    string
-	Version string
-	Source  registry.SkillSource
+	Name   string
+	Source string // "owner/repo"
 }
 
 // Merge combines global + project configs and expands each MCP entry
@@ -88,18 +87,9 @@ func Merge(global config.Config, project config.ProjectConfig, reg registry.Regi
 		if entry.Disabled {
 			continue
 		}
-		regSkill, err := reg.GetSkill(skillName)
-		if err != nil {
-			return MergedConfig{}, fmt.Errorf("registry lookup for skill %q: %w", skillName, err)
-		}
-		version := entry.Version
-		if version == "" {
-			version = regSkill.Latest
-		}
 		mc.Skills = append(mc.Skills, MergedSkill{
-			Name:    skillName,
-			Version: version,
-			Source:  regSkill.Source,
+			Name:   skillName,
+			Source: entry.Source,
 		})
 	}
 

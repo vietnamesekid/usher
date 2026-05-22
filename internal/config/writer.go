@@ -71,6 +71,21 @@ func (w *Writer) AddAuthEntry(entry AuthEntry) error {
 	return w.write(cfg)
 }
 
+func (w *Writer) RemoveAuthEntry(provider string) error {
+	cfg, err := w.read()
+	if err != nil {
+		return err
+	}
+	filtered := cfg.Auth[:0]
+	for _, a := range cfg.Auth {
+		if a.Provider != provider {
+			filtered = append(filtered, a)
+		}
+	}
+	cfg.Auth = filtered
+	return w.write(cfg)
+}
+
 func (w *Writer) SetTools(t ToolsConfig) error {
 	cfg, err := w.read()
 	if err != nil {
