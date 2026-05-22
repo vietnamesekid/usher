@@ -47,10 +47,15 @@ func (p *Prompt) AskConfirm(question string) bool {
 }
 
 func (p *Prompt) AskMultiSelect(question string, options []string) []string {
+	return p.AskMultiSelectWithDefaults(question, options, nil)
+}
+
+func (p *Prompt) AskMultiSelectWithDefaults(question string, options, defaults []string) []string {
 	var answers []string
 	q := &survey.MultiSelect{
 		Message: question,
 		Options: options,
+		Default: defaults,
 	}
 	_ = survey.AskOne(q, &answers)
 	return answers

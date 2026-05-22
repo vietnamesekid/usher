@@ -19,48 +19,88 @@ func newSetupCmd() *cobra.Command {
 	}
 }
 
+var allToolLabels = []string{"Claude Code", "Gemini CLI", "Codex CLI", "Cursor", "Windsurf", "Cline"}
+
+func toolsToSelected(t config.ToolsConfig) []string {
+	var s []string
+	if t.Claude {
+		s = append(s, "Claude Code")
+	}
+	if t.Gemini {
+		s = append(s, "Gemini CLI")
+	}
+	if t.Codex {
+		s = append(s, "Codex CLI")
+	}
+	if t.Cursor {
+		s = append(s, "Cursor")
+	}
+	if t.Windsurf {
+		s = append(s, "Windsurf")
+	}
+	if t.Cline {
+		s = append(s, "Cline")
+	}
+	return s
+}
+
+func selectedToTools(selected []string) config.ToolsConfig {
+	set := make(map[string]bool, len(selected))
+	for _, s := range selected {
+		set[s] = true
+	}
+	return config.ToolsConfig{
+		Claude:   set["Claude Code"],
+		Gemini:   set["Gemini CLI"],
+		Codex:    set["Codex CLI"],
+		Cursor:   set["Cursor"],
+		Windsurf: set["Windsurf"],
+		Cline:    set["Cline"],
+	}
+}
+
 func runSetup() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	usherDir := filepath.Join(home, ".usher")
-
-	globalPath := filepath.Join(usherDir, "config.json")
-	if _, err := os.Stat(globalPath); err == nil {
-		d.out.Info("Usher is already initialized at " + globalPath)
-		return nil
-	}
-
-	allTools := []string{"Claude Code", "Gemini CLI", "Codex CLI", "Cursor", "Windsurf", "Cline"}
-	selected := d.prompt.AskMultiSelect("Which AI coding tools do you use? (space to select)", allTools)
-
-	selectedSet := make(map[string]bool, len(selected))
-	for _, s := range selected {
-		selectedSet[s] = true
-	}
-	tools := config.ToolsConfig{
-		Claude:   selectedSet["Claude Code"],
-		Gemini:   selectedSet["Gemini CLI"],
-		Codex:    selectedSet["Codex CLI"],
-		Cursor:   selectedSet["Cursor"],
-		Windsurf: selectedSet["Windsurf"],
-		Cline:    selectedSet["Cline"],
-	}
-
-	cfg := config.DefaultConfig()
-	cfg.Tools = tools
-
+	globalPath := filepath.Join(home, ".usher", "config.json")
 	w := config.NewWriter(globalPath)
-	if err := w.Init(cfg); err != nil {
-		return fmt.Errorf("writing config: %w", err)
+
+	_, statErr := os.Stat(globalPath)
+	alreadyExists := statErr == nil
+
+	// Load existing tools as default selection when re-running setup.
+	var defaults []string
+	if alreadyExists {
+		if existing, err := d.cfgLoader.LoadGlobal(); err == nil {
+			defaults = toolsToSelected(existing.Tools)
+		}
 	}
 
-	// Add .usher/.secrets to .gitignore in cwd.
-	addGitignoreEntry(".usher/.secrets")
+	_ = defaults // passed to multiselect below
+	selected := d.prompt.AskMultiSelectWithDefaults(
+		"Which AI coding tools do you use? (space to select)",
+		allToolLabels,
+		defaults,
+	)
+	tools := selectedToTools(selected)
 
-	d.out.Success("Initialized usher at " + globalPath)
-	d.out.Info("Next: usher mcp add <name>  or  usher skill add <name>")
+	if alreadyExists {
+		if err := w.SetTools(tools); err != nil {
+			return fmt.Errorf("updating config: %w", err)
+		}
+		d.out.Success("Updated tool selection in " + globalPath)
+	} else {
+		cfg := config.DefaultConfig()
+		cfg.Tools = tools
+		if err := w.Init(cfg); err != nil {
+			return fmt.Errorf("writing config: %w", err)
+		}
+		addGitignoreEntry(".usher/.secrets")
+		d.out.Success("Initialized usher at " + globalPath)
+		d.out.Info("Next: usher mcp add <name>  or  usher skill add <name>")
+	}
 	return nil
 }
 
