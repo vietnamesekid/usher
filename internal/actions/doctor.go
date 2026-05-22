@@ -26,8 +26,15 @@ func (a *DoctorActions) Check() error {
 		return err
 	}
 
-	headers := []string{"TOOL", "BINARY", "CONFIG", "MCPs", "NOTES"}
+	headers := []string{"TOOL", "BINARY", "CONFIG", "MCPs", "SKILLS", "NOTES"}
 	var rows [][]string
+
+	skillCount := 0
+	for _, entry := range global.Skills {
+		if !entry.Disabled {
+			skillCount++
+		}
+	}
 
 	for _, w := range writers.All() {
 		toolName := w.Name()
@@ -71,6 +78,7 @@ func (a *DoctorActions) Check() error {
 			checkmark(binaryOK),
 			checkmark(configOK),
 			fmt.Sprintf("%d", mcpCount),
+			fmt.Sprintf("%d", skillCount),
 			noteStr,
 		})
 	}
